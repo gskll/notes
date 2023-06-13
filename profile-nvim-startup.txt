@@ -1,0 +1,2 @@
+Run the command `nvim --startuptime startup.log`
+Will create log file breaking down the startup time of each plugin
