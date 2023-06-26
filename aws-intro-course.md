@@ -332,11 +332,99 @@
         - application servers can read from read replicas and write to master
 
 - aws dynamoDB - noSql and serverless
-    - fully managed, creating tables on existing database, key-value type of database
-    - offers seamless, horizontal scaling - no downtime if change performance characteristics
-    - data is multiplicated around several AZs in a region
-    - structure:
-        - table
-        - item (row)
-        - attributes
-    - can use DAX to reduce latency for dynamodb
+  - fully managed, creating tables on existing database, key-value type of database
+  - offers seamless, horizontal scaling - no downtime if change performance characteristics
+  - data is multiplicated around several AZs in a region
+  - structure:
+    - table
+    - item (row)
+    - attributes
+  - can use DAX to reduce latency for dynamodb
+
+## Automation and Devops
+
+- infrastructure as code to automate the deployment of infra
+- cloudformation: infra patterns defined in template file using code
+- define it once and then reuse
+- cloudformation builds infra according to template
+  - template: text file with instructions
+  - stack: envi described by template and created/updated/deleted as a single unit
+  - stackset: extends stacks by modifying stacks across account and regions in 1 operation
+  - change set: summary of proposed changes to tyour stack - preview on how changes might impact resources before implementing
+- platform as a service: elastic beanstalk
+  - just the code and data, don't manage OS and apps
+  - PaaS manages the rest for us
+  - upload zipfile and creates beanstalk environment
+  - 'web apps made easy'
+- CI/CD
+  - aws codecommit - similar to github - source control
+  - aws codebuild - builds/tests code - jenkins
+  - aws codedeploy - deploys to instances in environment - ansible
+  - aws codepipeline - manages the three
+
+## DNS, Caching and Performance
+
+- Route 53 - DNS
+  - domain registration
+  - hosted zone - created on registration
+    - holds records belonging to a domain which need resolution
+    - A record - ip address for a name
+  - health checks - checks endpoints to make sure accessible
+  - traffic flow
+  - intelligent dns
+    - simple: simple
+    - failover: health checks, if primary down send to secondary
+    - geolocation: route to closest region
+    - geoproximity: to closest region with geographic area
+    - latency: tries to calculate lowest latency route to resources
+    - multivalue answer: similar to load balancing
+    - weighted: relative weights to determine route - e.g. a/b tests
+- cloudfront CDN
+  - location where static files are cached to get content closer to users
+  - cloudfront origin: s3 or ec2
+  - distribution to edge location
+  - edge location around the world
+- global accelerator - helps direct users to best endpoint and decrease latency
+  - leverages cloudfront infrastructure
+  - user traffic ingresses using closest edge location
+  - from edge location goes to global accelerator network -
+  - static anycast ip addresses
+  - traffic traverses the aws global network
+  - users redirected to another endpoint if problem
+  - can use other ports outside of http/https
+
+## containers and serverless computing
+
+- serverless = you don't manage the underlying servers
+- docker containers on amazon ECS
+  - ECS cluster logical grouping of tasks (running docker container) or services
+  - task defniition: blueprint describing how docker container should launch using images
+    - amazon elastic container registry stores images
+  - services used to maintain a desired count of tasks
+  - ec2 launch type with auto scaling
+  - or fargate - serverless and auto scaling - don't have to manage underlying instances
+- aws lambda - serverless compute service
+  - developer uploads some code
+  - only pay for function execution: based on time/memory
+  - every occurs from cli, api, sdk or trigger
+  - code is executed
+  - max execution time is 15 minutes, you can have concurrent executions
+- application integration services for decoupling
+  - event-driven architecture
+  - SNS simple notification service
+    - publishers send information to topics
+    - subscribers subscribe to topics
+    - push model - subscribers waiting for event in topics
+    - e.g. notification email
+  - SQS simple queue service
+    - direct app tier polls SQS when ready
+    - don't lose any messages
+    - lambda, ecs etc.
+- amazon eventbridge
+  - event sources: aws, custom, saas
+  - eventbridge event bus decides what to do with an event in event stream
+- amazon api gateway
+  - create http/rest/website apis
+  - single application entry point, microservices behind
+  - published api, method request, integration request, integration request maps request parameters of method request to format required by backend
+    - endpoint, integration response, method response maps status codes, headers, payload into format for client
