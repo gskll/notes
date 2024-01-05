@@ -282,54 +282,58 @@
 ## AWS storage
 
 - EBS elastic block storage - attached to EC2 instances - persistant/long-term configurable storage
+
   - EBS snapshots of the storage at a given time with any config or data
   - Can create images from the snapshots and use them to create private AMIs and launch other instances with same config
 
 - EFS elastic file storage
-    - can attach EC2 instances to file system: instances across availability zones can read/write to same EFS
-    - mounted using /efs-mnt, NFS protocol to access, linux only
-    - can also connect on-premises client with direct connection/VPN
+
+  - can attach EC2 instances to file system: instances across availability zones can read/write to same EFS
+  - mounted using /efs-mnt, NFS protocol to access, linux only
+  - can also connect on-premises client with direct connection/VPN
 
 - S3 object based with rest api
-    - amazon simple storage service
-    - object store with containers into which files are put -> s3 bucket
-    - object is a file you upload -> any files
-    - millions of objects in a bucket
-    - objects accessed using a URL
-    - object consists of key (name), version ID, value (data), metadata, subresources, access control information
-    - accessed with REST api -> http protocol to GET/PUT/POST/SELECT/DELETE
-    - s3 available via public internet but data in a region unless configured to be replicated
-    - OR can also access from VPC via the internet gateway
-        - EC2 instances connect using public addresses
-        - must be in public subnet, or private subnet with a NAT gateway
-    - OR s3 gateway endpoint where instances connect using private addresses
-        - if don't want to use public addresses at any point
+
+  - amazon simple storage service
+  - object store with containers into which files are put -> s3 bucket
+  - object is a file you upload -> any files
+  - millions of objects in a bucket
+  - objects accessed using a URL
+  - object consists of key (name), version ID, value (data), metadata, subresources, access control information
+  - accessed with REST api -> http protocol to GET/PUT/POST/SELECT/DELETE
+  - s3 available via public internet but data in a region unless configured to be replicated
+  - OR can also access from VPC via the internet gateway
+    - EC2 instances connect using public addresses
+    - must be in public subnet, or private subnet with a NAT gateway
+  - OR s3 gateway endpoint where instances connect using private addresses
+    - if don't want to use public addresses at any point
 
 - file vs object
-    - file:
-        - data stored in directories
-        - hierarchy of directories can be formed
-        - file systems mounted to an OS
-        - work like local storage
-        - network connection maintained
-    - object:
-        - data stored in buckets
-        - flat namespace
-        - hierarchy can be mimicked with prefixes
-        - accessed by REST api and cannot be mounted
-        - network connection completed after each request
+  - file:
+    - data stored in directories
+    - hierarchy of directories can be formed
+    - file systems mounted to an OS
+    - work like local storage
+    - network connection maintained
+  - object:
+    - data stored in buckets
+    - flat namespace
+    - hierarchy can be mimicked with prefixes
+    - accessed by REST api and cannot be mounted
+    - network connection completed after each request
 
 ## AWS Database Services
 
 - amazon relational database service RDS - runs with most relational database systems
-    - managed relational database (updates,patching performed by AWS in window that you can define)
-    - runs on EC2 so you choose the instance type
-    - Amazon Aurora (AWS own relational db), mysql, postgresql, mariaDB, oracle, microsoft sql server
-    - can scale up: increase instance type stats: scale for reads and writes
-    - horizontal scaling with disaster recovery
-        - multi-AZ: creates passive standby used for disaster recovery: synchronous replication
-        - read replica (async replication): used for scaling database queries
-        - application servers can read from read replicas and write to master
+
+  - managed relational database (updates,patching performed by AWS in window that you can define)
+  - runs on EC2 so you choose the instance type
+  - Amazon Aurora (AWS own relational db), mysql, postgresql, mariaDB, oracle, microsoft sql server
+  - can scale up: increase instance type stats: scale for reads and writes
+  - horizontal scaling with disaster recovery
+    - multi-AZ: creates passive standby used for disaster recovery: synchronous replication
+    - read replica (async replication): used for scaling database queries
+    - application servers can read from read replicas and write to master
 
 - aws dynamoDB - noSql and serverless
   - fully managed, creating tables on existing database, key-value type of database
