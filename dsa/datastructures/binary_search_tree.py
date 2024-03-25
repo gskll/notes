@@ -117,20 +117,22 @@ class BSTNode:
 
         return False
 
+    def height(self):
+        if self.val is None:
+            return 0
 
-run_cases = [
-    (4, "Jax#8", True),
-    (
-        8,
-        "Swoli#44",
-        False,
-    ),
-]
+        left_height, right_height = 0, 0
+        if self.left:
+            left_height = self.left.height()
+        if self.right:
+            right_height = self.right.height()
 
-submit_cases = run_cases + [
-    (10, "Marlo#29", True),
-    (16, "Thoreuth#11", True),
-]
+        return max(left_height, right_height) + 1
+
+
+run_cases = [(1, 1), (3, 3), (10, 7)]
+
+submit_cases = run_cases + [(20, 7)]
 
 
 class Character:
@@ -214,7 +216,7 @@ def char_list_to_string(char_list):
     return character_names
 
 
-def test(num_characters, character_name, expected):
+def test(num_characters, expected):
     characters = get_characters(num_characters)
     bst = BSTNode()
     for character in characters:
@@ -224,14 +226,10 @@ def test(num_characters, character_name, expected):
     print("-------------------------------------")
     print(bst)
     print("-------------------------------------\n")
-    print(f"Expecting {character_name}: {expected}")
+    print(f"Expecting Height: {expected}")
     try:
-        actual_bst = BSTNode()
-        for character in characters:
-            actual_bst.insert(character)
-        gamertag = int(character_name.split("#")[1])
-        actual = actual_bst.exists(Character(gamertag))
-        print(f"Actual: {actual}")
+        actual = bst.height()
+        print(f"Actual Height: {actual}")
         if expected == actual:
             print("Pass \n")
             return True
