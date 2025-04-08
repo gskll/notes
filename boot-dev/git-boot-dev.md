@@ -41,6 +41,7 @@
 - creating a branch is just creating a pointer to a specific commit
 - the commit that the branch points to is the tip of the branch: stored in `.git/refs/heads`
 - because it's just a pointer a branch is very lightweight and cheap
+- HEAD is a reference to the branch (or commit) you're currently on
 
 - branch_1 is pointing to commit H, main to D, branch_2 to F
 
@@ -125,3 +126,137 @@ A - B - C         main
   - can also delete a remote branch by pushing an empty branch `git push :<remotebranch>`
 
 - `git pull [<remote>/<branch>]` will fetch the actual file changes and not just the metadata like fetch
+
+## Fork
+
+- creates a copy of the original repo that you can modify without affecting the original
+- not a feature of git itself but of git hosting services
+- can create a PR from a fork branch to the original repo
+
+## Reflog
+
+- `git reflog` is like `git log` but logs the changes to a reference over time
+- shows where HEAD was over time - can be used to recover lost commits
+- can run `git cat-file -p SHA` with SHA from reflog
+- then can use the `tree` hash to find `blob` hash and recover lost contents
+
+- or easier you can just do `git merge HEAD@{1}`
+- `git show SHA` will show the commit contents
+
+## Merge conflict
+
+- when two commits modify the same line and git can't automatically decide which change to keep
+- resolve and commit
+
+- The git checkout command can checkout the individual changes during a merge conflict using the --theirs or --ours flags.
+- "ours" refers to the branch you are on, "theirs" refers to the branch being merged
+- ours will overwrite the file with the changes from the branch you are currently on and merging into
+- theirs will overwrite the file with the changes from the branch you are merging into the current branch
+
+`git checkout --theirs path/to/file`
+
+## Rebase conflicts
+
+- can lose history in an unrecoverable way because edits history
+- rebasing puts you in a detached HEAD state
+- 'theirs' and 'ours' are flipped
+- temporarily checkout rebase branch - ours are rebase branch changes, theirs are our changes
+- once conflicts are resolved, add the changes but don't commit. `git rebase --continue`
+
+- sometimes have to manually resolve the same conflicts over and over
+- with long-running feature branch, or multiple branches being rebased onto main
+- `git rerere` 'reuse recorded resolution' - git remembers how you resolved a hunk conflict so it can resolve it automatically
+- applies to both rebasing and merging
+- rerere cache is stored at `.git/rr-cache`
+- `git config --local rerere.enabled true`
+
+## Squashing commits
+
+- `git rebase -i HEAD~n` where n is the number of commits you want to squash
+- change `pick` to `squash` for all but the first commit
+- we're telling git to replay all the changes from the current branch onto that commit
+- squashing is destructive - changes are all there but the individual markers are gone
+
+- if working on a copy of a branch, can delete the original and rename the temp using `git branch -m new-name`
+
+- after squashing remote branch will be out of sync containing commits that are no longer in local
+- force push
+
+- common workflow to develop on feature branch making commits as you go
+- then when ready to merge into main you squash all commits to make it look like one commit
+- then push to remote
+
+## Stash
+
+- records the current state of your working directory and the index (staging area)
+- reverts your working directory to HEAD
+- can stash with a message `git stash -m`
+- `git stash apply` keeps the stash in the list
+- `git stash drop`
+- `git stash apply stash@{2}`
+
+## Revert
+
+- an anti-commit, doesn't remove the commit like `git reset`
+- creates a new commit that does the opposite of the reverted commit
+- undoes the change but keeps a full history of the change and its undoing
+
+## Diff
+
+- `git diff` shows changes between working tree and last commit
+- `git diff HEAD~1` shows changes between previous commit and current state, including last commit and working tree
+- `git diff SHA_1 SHA_2` shows changes between two commits
+
+- can run `git blame filename` to see who made changes
+
+## Cherry pick
+
+- when you don't want the changes from all commits, but just want a single commit from the branch
+- `git cherry-pick SHA`
+
+## Bisect
+
+- how to find out when a change was introduced?
+- `git bisect start`
+- select a good commit where the bug wasn't present `git bisect good SHA`
+- select a bad commit where the bug is present `git bisect bad SHA`
+- git will checkout a commit between good and bad for you to test and see if bug is present
+- execute `git bisect good` or `git bisect bad` to say the current commit is good or bad
+- loop until bisect completes
+- `git bisect reset`
+
+- can also automate bisect by running a script that returns 0 if commit is good, or 1-127 if bad
+- `git bisect run my_script arguments`
+
+## Worktrees
+
+- worktree or working directory is just the directory on your filesystem where the code you're tracking with git lives
+- usually it's the root of your git repo (where .git/ is)
+- contains tracked/untracked/modified files
+
+- `git worktree` allows us to work with worktrees
+- `git worktree list`
+- allows you to work on different changes without stash/branch workflow
+- main worktree - contains .git directory with the entire repo state - heavy
+- linked worktree - contains .git file with path to main working tree - light (similar to branch) - can be complicated working with secrets and env variables
+
+- `git worktree add <path> [<branch>]`
+- works like any other repo - you can create/delete/switch branches - but you can't checkout a branch checked out by any other working tree (main or linked)
+
+- references are stored in `.git/worktrees`
+- a change in a linked worktree is automatically reflected in the main worktree
+- you can almost think of a worktree as another branch in the repo but with it's own space on the filesystem
+
+- cleanup with `git worktree remove <name>`
+- can also delete the directory and run `git worktree prune`
+
+## Tags
+
+- tag is a name linked to a commit that doesn't move between commits, unlike a branch
+- tags can be created/deleted but not modified
+- list tags `git tag`
+- create a tag on current commit `git tag -a "tag name" -m "tag message"`
+
+- almost anywhere you can use a SHA you can use a tag name
+- usually for releases
+
