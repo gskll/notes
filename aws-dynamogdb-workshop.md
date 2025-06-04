@@ -43,7 +43,7 @@ heartbeats are the health pings from leaders
 get item - if strong consistency goes straight to the leader, for eventual consistency goes to any node - RCUs are halved for eventual consistency
 eventual by default
 
-each table 3k rcu/1k wcu
+each partition 3k rcu/1k wcu
 
 gsi can have partition key update - will be delete then put, 2x cost
 
@@ -96,3 +96,59 @@ transactions api - up to 100 items
 
 - not for maintaining normalized data
 - atomic writes of related data
+
+
+
+
+## Advanced DynamoDB Insights & Optimization Strategies
+
+Here are some key takeaways and advanced considerations for optimizing DynamoDB usage:
+
+### Core Mechanics & Nuances
+* **Primary Keys Deep Dive:**
+    * The **partition key** is fundamental for data distribution.
+    * A **composite primary key** (partition key + sort key) is powerful for complex querying and modeling 1:N relationships within an item collection.
+* **Indexing Strategies:**
+    * **GSIs (Global Secondary Indexes)** offer flexible querying on alternate keys, acting like separate, denormalized views of your data. Remember they have their own provisioned throughput and are eventually consistent. GSI key updates incur double the write cost (delete old, put new).
+    * **LSIs (Local Secondary Indexes)** provide strongly consistent reads on the same partition key but with a different sort key. However, they must be created with the table, share the base table's throughput, have a 5-per-table limit, and impose a 10GB item collection size limit on the table.
+    * GSIs can be used for filtering: if an item lacks a GSI attribute, it's not indexed, which can be a deliberate design choice.
+* **API Call Behavior:**
+    * `BatchWriteItem`/`BatchGetItem`: Individual operations within a batch can fail, and the API will return details on failures.
+    * `TransactWriteItems`/`TransactGetItems`: These are all-or-nothing atomic operations across up to 100 items. If one part fails, the entire transaction is rolled back. Crucially, they are *not* for maintaining normalized relational data structures.
+
+---
+### Performance & Cost Optimization
+* **Throughput Management:**
+    * **On-Demand:** Default and simplifies capacity management. It accommodates peaks by allowing bursts up to twice your previous peak. Ideal for unpredictable workloads.
+    * **Provisioned:** Can be more cost-effective for steady, predictable workloads with gradual ramps but requires monitoring and auto-scaling configuration.
+* **Read/Write Cost Factors:**
+    * **RCUs/WCUs:** Understand the calculation (e.g., RCUs based on 4KB eventually consistent reads or 8KB strongly consistent; WCUs on 1KB writes). Eventual consistency reads halve RCU consumption.
+    * **GSI Costs:** GSIs have separate RCU/WCU provisioning. Updates to attributes that are part of a GSI key will incur write costs on both the base table and the GSI.
+* **Data Size & Operations:**
+    * Queries return up to 1MB of data per request, with pagination for larger result sets.
+    * Minimize item size for frequently accessed data, especially in queries, as RCUs are based on data scanned.
+* **Caching with DAX:** For read-heavy workloads with popular items experiencing distribution imbalance, DynamoDB Accelerator (DAX) provides an in-memory cache for microsecond latency.
+
+---
+### Advanced Design Patterns
+* **Single Table vs. Multiple Tables:**
+    * **Single Table:** Often preferred when data is used together, enabling fewer queries to fetch related information.
+    * **Multiple Tables:** Can be advantageous if data is logically separate, used by different applications, or requires distinct provisioning/configuration.
+* **Write Sharding for High Cardinality:**
+    * To handle high write throughput on low-cardinality partition keys (e.g., voting), shard the partition key by adding a suffix.
+    * This distributes writes across more logical partitions, increasing throughput. Reads require aggregating data from all shards in parallel.
+* **Vertical Partitioning with Sort Keys:**
+    * Break down large items or complex documents.
+    * Store related but distinct pieces of information under the same partition key but with different sort keys. This helps reduce item size for specific access patterns and can make queries more targeted.
+* **Modeling Hierarchical Data:**
+    * Use composite sort keys with concatenated values to define and query hierarchical relationships efficiently (e.g., `COUNTRY#STATE#CITY`).
+* **Streams for Event-Driven Architectures:**
+    * **DynamoDB Streams:** Provide an ordered stream of item changes (exactly once, strictly ordered by key within a shard) with a 24-hour retention. Lambdas can process these for free.
+    * **Kinesis Data Streams:** Offer more scalability and configurable retention for stream processing but lose the strict per-key ordering if not managed carefully at the application level.
+
+---
+### Operational Considerations
+* **Scan Operations:** Strongly discourage direct `Scan` operations in production. They are expensive as they read every item in the table. Consider restricting scan permissions in IAM.
+* **PartiQL:** While SQL-compatible and useful for ad-hoc queries or exploration, be mindful that over-reliance can hinder a true NoSQL design mindset which focuses on access patterns rather than relational ad-hoc querying.
+* **TTL (Time To Live):** A no-cost feature to automatically delete items, useful for managing ephemeral data like sessions or logs.
+* **Table Classes:** Consider the **Standard-Infrequent Access (Standard-IA)** table class for tables with large amounts of data that are not frequently accessed to significantly reduce storage costs.
